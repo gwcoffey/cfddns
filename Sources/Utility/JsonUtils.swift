@@ -1,6 +1,6 @@
 import Foundation
 
-enum JsonUtilsError: Error, CustomStringConvertible {
+fileprivate enum JsonUtilsError: Error, CustomStringConvertible {
     case invalidResponse(Error, String)
     
     var description: String {

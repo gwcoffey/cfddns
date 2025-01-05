@@ -6,6 +6,24 @@ import Logging
 fileprivate let CLOUDFLARE_API_BASE = "https://api.cloudflare.com/client/v4"
 fileprivate let LOGGER = Logger(label: "com.gwcoffey.cfddns.CloudFlairUtils")
 
+fileprivate enum CloudflareUtilsError: Error, CustomStringConvertible {
+    case invalidZoneName(String)
+    case invalidRecordName(String)
+    case updateFailed([String])
+    
+    var description: String {
+        switch self {
+        case .invalidZoneName(let name):
+            return "Your Cloudflare account has no zone named '\(name)'."
+        case .invalidRecordName(let name):
+            return "This Cloudflare zone has no record named '\(name)'."
+        case .updateFailed(let messages):
+           let formattedMessages = messages.map{ "Cloudflare Message: \($0)"}.joined(separator: "\n")
+            return "Unable to update Cloudflare record.\n\(formattedMessages)"
+        }
+    }
+}
+
 
 // PAYLOADS
 
@@ -115,25 +133,8 @@ fileprivate func cfapiUpdateDnsRecord(
     return try await cfapiCall(request: request)
 }
 
-// EXPORTED
 
-enum CloudflareUtilsError: Error, CustomStringConvertible {
-    case invalidZoneName(String)
-    case invalidRecordName(String)
-    case updateFailed([String])
-    
-    var description: String {
-        switch self {
-        case .invalidZoneName(let name):
-            return "Your Cloudflare account has no zone named '\(name)'."
-        case .invalidRecordName(let name):
-            return "This Cloudflare zone has no record named '\(name)'."
-        case .updateFailed(let messages):
-           let formattedMessages = messages.map{ "Cloudflare Message: \($0)"}.joined(separator: "\n")
-            return "Unable to update Cloudflare record.\n\(formattedMessages)"
-        }
-    }
-}
+// EXPORTED
 
 func updateARecord(zoneName: String, recordName: String, ipAddress: String) async throws {
     guard let zone = try await cfapiListZones(domain: zoneName).first else {

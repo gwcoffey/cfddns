@@ -1,6 +1,6 @@
 import Foundation
 
-enum CliUtilsErrors: Error, CustomStringConvertible {
+fileprivate enum CliUtilsErrors: Error, CustomStringConvertible {
     case noSecretProvided
     
     var description: String {

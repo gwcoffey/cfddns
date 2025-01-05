@@ -1,9 +1,10 @@
 import Foundation
 import Logging
+
 fileprivate let KEYCHAIN_CLOUDFLARE_SERVICE_NAME = "com.gwcoffey.cfddns.CloudflareApiKey"
 fileprivate let LOGGER = Logger(label: "com.gwcoffey.cfddns.SecretUtils")
 
-enum SecretError: Error, CustomStringConvertible {
+fileprivate enum SecretError: Error, CustomStringConvertible {
     case secretNotFound
     case keychainError(status: OSStatus)
     
