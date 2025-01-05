@@ -1,39 +1,32 @@
-/*
- cfddns -> prompts for secret and uses it
- cfddns --save-secret -> prompts for secret and stores it
- cfddns --keychain -> reads secret from keychain
- */
-
 import Foundation
 import ArgumentParser
+import Logging
+
 
 @main struct Cfddns: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Dynaminc DNS tool for CloudFlare.",
-        subcommands: [RefreshCommand.self, SecretCommand.self],
+        subcommands: [RefreshCommand.self, CheckCommand.self, SecretCommand.self],
         defaultSubcommand: RefreshCommand.self)
 }
 
-//do {
-//    let ip = try await myIp()
-//    print(ip)
-//    var secret = try cloudflareSecret()
-//    if secret == nil {
-//        print("need to store secret")
-//        secret = try promptForCloudflareSecret()
-//    }
-//    print("secret: \(secret!)")
-//}
-//catch IPFetcherError.invalidResponse(let data) {
-//    die(message: "invalid response from IPify service: \(data)", code: 1)
-//}
-//catch IPFetcherError.networkError(let error) {
-//    die(message: "Error: network request failed with error: \(error)", code: 2)
-//}
-//catch IPFetcherError.unexpectedInvalidUrl(let urlString) {
-//    die(message: "Error: invalid URL: \(urlString)", code: 3)
-//}
-//catch {
-//    die(message: "Unexpected error: \(error)", code: -1)
-//}
+struct GlobalOptions: ParsableArguments {
+    @Flag(name: .shortAndLong, help: "Use verbose logging.")
+    var verbose = false
+    
+    func apply() {
+        LoggingSystem.bootstrap { label in
+            var handler = StreamLogHandler.standardError(label: label)
+            handler.logLevel = verbose ? .info : .error
+            return handler
+        }
+    }
+}
 
+struct CloudflareRecordOptions: ParsableArguments {
+    @Argument(help: "The Cloudflare zone name (eg, 'example.com').")
+    var zone: String
+
+    @Argument(help: "The full record name (eg, 'host.example.com').")
+    var name: String
+}

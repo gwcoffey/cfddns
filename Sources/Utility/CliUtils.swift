@@ -1,14 +1,23 @@
 import Foundation
 
-func promptForSecret(prompt: String) -> String? {
-    if let secret = getpass("\(prompt): ") {
-        let secretString = String(cString: secret)
-        return secretString == "" ? nil : secretString
+enum CliUtilsErrors: Error, CustomStringConvertible {
+    case noSecretProvided
+    
+    var description: String {
+        switch self {
+        case .noSecretProvided:
+            return "No secret was provided"
+        }
     }
-    return nil
 }
 
-func die(message: String, code: Int32) -> Never {
-    fputs("Error: \(message)\n", stderr)
-    exit(code)
+func promptForSecret(prompt: String) throws -> String {
+    if let secret = getpass("\(prompt): ") {
+        let secretString = String(cString: secret)
+        if secretString != "" {
+            return secretString
+        }
+    }
+    throw CliUtilsErrors.noSecretProvided
 }
+

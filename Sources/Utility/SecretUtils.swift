@@ -1,10 +1,20 @@
 import Foundation
-
+import Logging
 fileprivate let KEYCHAIN_CLOUDFLARE_SERVICE_NAME = "com.gwcoffey.cfddns.CloudflareApiKey"
+fileprivate let LOGGER = Logger(label: "com.gwcoffey.cfddns.SecretUtils")
 
-enum SecretError: Error {
+enum SecretError: Error, CustomStringConvertible {
     case secretNotFound
     case keychainError(status: OSStatus)
+    
+    var description: String {
+        switch self {
+        case .secretNotFound:
+            return "No Cloudflare secret has been stored. Use `cfddns secret` to store your API key first."
+        case .keychainError(let status):
+            return "An unexpected error occurred while accessing the keychain: \(status)."
+        }
+    }
 }
 
 func readCloudflareSecret() throws -> String {
@@ -41,6 +51,8 @@ func storeCloudflareSecret(_ secret: String) throws {
     if addStatus != errSecSuccess {
         throw SecretError.keychainError(status: addStatus)
     }
+    
+    LOGGER.info("stored secret in keychain")
 }
 
 func deleteCloudflareSecret() throws {
@@ -53,4 +65,6 @@ func deleteCloudflareSecret() throws {
     if status != errSecSuccess && status != errSecItemNotFound {
         throw SecretError.keychainError(status: status)
     }
+    
+    LOGGER.info("deleted stored secret from keychain")
 }

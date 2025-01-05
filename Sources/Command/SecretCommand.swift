@@ -6,17 +6,19 @@ struct SecretCommand: AsyncParsableCommand {
         commandName: "secret",
         abstract: "Manage the CloudFlare secret.")
     
+    @OptionGroup var globalOptions: GlobalOptions
+    
     @Flag(name: .shortAndLong, help: "Delete saved secrets.")
     var delete: Bool = false
-
-    mutating func run() async throws {
+    
+    mutating func run() async throws {        
+        globalOptions.apply()
+        
         if delete {
             try deleteCloudflareSecret()
         }
         else {
-            guard let secret = promptForSecret(prompt: "Enter your Cloudflare API key") else {
-                die(message: "No secret provided", code: -1)
-            }
+            let secret = try promptForSecret(prompt: "Enter your Cloudflare API key")
             try storeCloudflareSecret(secret)
         }
     }
