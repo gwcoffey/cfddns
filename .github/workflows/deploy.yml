@@ -1,0 +1,26 @@
+name: Deploy to gMini
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Xcode
+      run: xcode-select --install
+
+    - name: Build the tool
+      run: |
+        swift build --configuration release 
+        mkdir -p ~/deploy
+        cp ./build/release/cfddns ~/deploy/cfddns
+
+    - name: Install the tool
+      run: sudo mv ~/deploy/cfddns /usr/local/bin/cfddns
