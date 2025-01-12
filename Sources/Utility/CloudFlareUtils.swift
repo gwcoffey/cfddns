@@ -80,20 +80,19 @@ fileprivate func recordUrl(zoneId: String, dnsRecordId: String) -> URL {
 
 // UTILS
 
-fileprivate func appendBearerToken(request: inout URLRequest) throws {
-    let secret = try readCloudflareSecret()
-    request.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
+fileprivate func appendBearerToken(request: inout URLRequest, token: String) throws {
+    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 }
 
-fileprivate func cfapiCall<T: Decodable>(url: URL) async throws -> T {
+fileprivate func cfapiCall<T: Decodable>(url: URL, token: String) async throws -> T {
     let request = URLRequest(url: url)
-    return try await cfapiCall(request: request)
+    return try await cfapiCall(request: request, token: token)
 }
 
-fileprivate func cfapiCall<T: Decodable>(request: URLRequest) async throws -> T {
+fileprivate func cfapiCall<T: Decodable>(request: URLRequest, token: String) async throws -> T {
     LOGGER.info("Call: \(request)")
     var request = request
-    try appendBearerToken(request: &request)
+    try appendBearerToken(request: &request, token: token)
     request.setValue("application/json", forHTTPHeaderField: "Accepts")
     
     if request.httpBody != nil {
@@ -112,49 +111,51 @@ fileprivate func cfapiCall<T: Decodable>(request: URLRequest) async throws -> T 
 
 // API CALLS
 
-fileprivate func cfapiListZones(domain: String) async throws -> [CFAPIZone] {
-    return try await cfapiCall(url: try listZonesUrl(zoneName: domain))
+fileprivate func cfapiListZones(domain: String, token: String) async throws -> [CFAPIZone] {
+    return try await cfapiCall(url: try listZonesUrl(zoneName: domain), token: token)
 }
 
-fileprivate func cfapiListDnsRecords(zoneId: String, name: String) async throws -> [CFAPIARecord] {
-    return try await cfapiCall(url: try listDnsRecordsUrl(zoneId: zoneId, name: name))
+fileprivate func cfapiListDnsRecords(zoneId: String, name: String, token: String) async throws -> [CFAPIARecord] {
+    return try await cfapiCall(url: try listDnsRecordsUrl(zoneId: zoneId, name: name), token: token)
 }
 
 fileprivate func cfapiUpdateDnsRecord(
     zoneId: String,
     recordId: String,
-    ipAddress: String
+    ipAddress: String,
+    token: String
 ) async throws -> CFAPIARecord {
     let payload = CFAPIUpdateARecord.init(comment: "updated by cfddns", content: ipAddress)
 
     var request = URLRequest(url: recordUrl(zoneId: zoneId, dnsRecordId: recordId))
     request.httpMethod = "PATCH"
     request.httpBody = try JSONEncoder().encode(payload)
-    return try await cfapiCall(request: request)
+    return try await cfapiCall(request: request, token: token)
 }
 
 
 // EXPORTED
 
-func updateARecord(zoneName: String, recordName: String, ipAddress: String) async throws {
-    guard let zone = try await cfapiListZones(domain: zoneName).first else {
+func updateARecord(zoneName: String, recordName: String, ipAddress: String, token: String) async throws {
+    guard let zone = try await cfapiListZones(domain: zoneName, token: token).first else {
         throw CloudflareUtilsError.invalidZoneName(zoneName)
     }
-    guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName).first else {
+    guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName, token: token).first else {
         throw CloudflareUtilsError.invalidRecordName(recordName)
     }
     
     let _ = try await cfapiUpdateDnsRecord(
         zoneId: zone.id,
         recordId: record.id,
-        ipAddress: ipAddress)
+        ipAddress: ipAddress,
+        token: token)
 }
 
-func getARecordIp(zoneName: String, recordName: String) async throws -> String {
-    guard let zone = try await cfapiListZones(domain: zoneName).first else {
+func getARecordIp(zoneName: String, recordName: String, token: String) async throws -> String {
+    guard let zone = try await cfapiListZones(domain: zoneName, token: token).first else {
         throw CloudflareUtilsError.invalidZoneName(zoneName)
     }
-    guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName).first else {
+    guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName, token: token).first else {
         throw CloudflareUtilsError.invalidRecordName(recordName)
     }
     

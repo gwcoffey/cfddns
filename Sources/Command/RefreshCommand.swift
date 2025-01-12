@@ -10,12 +10,13 @@ struct RefreshCommand: AsyncParsableCommand {
         abstract: "Update CloudFlare DNS with your current IP address.")
     
     mutating func run() async throws {
-        globalOptions.apply()
-
+        try globalOptions.apply()
+        
         let ip = try await lookupIp()
         try await updateARecord(
             zoneName: cfRecordOptions.zone,
             recordName: cfRecordOptions.name,
-            ipAddress: ip)
+            ipAddress: ip,
+            token: globalOptions.token)
     }
 }

@@ -22,11 +22,11 @@ struct CheckCommand: AsyncParsableCommand {
         abstract: "Check the DNS record configuration.")
     
     mutating func run() async throws {
-        globalOptions.apply()
+        try globalOptions.apply()
         
         let (currentIp, configuredIp) = try await (
             lookupIp(),
-            getARecordIp(zoneName: cfRecordOptions.zone, recordName: cfRecordOptions.name)
+            getARecordIp(zoneName: cfRecordOptions.zone, recordName: cfRecordOptions.name, token: globalOptions.token)
         )
         
         if currentIp == configuredIp {
