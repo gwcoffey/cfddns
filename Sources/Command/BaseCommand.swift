@@ -2,19 +2,18 @@ import ArgumentParser
 import Logging
 import Foundation
 
-fileprivate let TOKEN_ENV_VAR = "CLOUDFLARE_API_TOKEN"
+private let tokenEnvVarName = "CLOUDFLARE_API_TOKEN"
 
 enum CommonError: Error, CustomStringConvertible {
     case missingCloudflareToken
-    
+
     var description: String {
         switch self {
         case .missingCloudflareToken:
-            return "A Cloudflare API token is expected in environemnt variable \(TOKEN_ENV_VAR) but none was provided"
+            return "A Cloudflare API token is expected in environemnt variable \(tokenEnvVarName) but none was provided"
         }
     }
 }
-
 
 // common options applied to all commands
 public struct CommonOptions: ParsableCommand {
@@ -22,17 +21,16 @@ public struct CommonOptions: ParsableCommand {
     var verbose = false
 
     var cloudflareToken = ""
-    
+
     public init() {
-        cloudflareToken = ProcessInfo.processInfo.environment[TOKEN_ENV_VAR] ?? ""
+        cloudflareToken = ProcessInfo.processInfo.environment[tokenEnvVarName] ?? ""
     }
-    
+
     public mutating func validate() throws {
         if cloudflareToken.isEmpty {
             throw CommonError.missingCloudflareToken
         }
     }
-
 }
 
 // a set of options for specifying a DNS record
@@ -44,8 +42,7 @@ struct CloudflareRecordOptions: ParsableArguments {
     var name: String
 }
 
-
-public protocol BaseCommand : AsyncParsableCommand {
+public protocol BaseCommand: AsyncParsableCommand {
     var commonOptions: CommonOptions { get }
     func runCommand() async throws
 }
@@ -58,7 +55,7 @@ extension BaseCommand {
             handler.logLevel = logLevel
             return handler
         }
-        
+
         try await self.runCommand()
     }
 }

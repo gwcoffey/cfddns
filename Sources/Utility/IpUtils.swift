@@ -1,16 +1,20 @@
 import Foundation
 import Logging
 
-fileprivate let IPIFY_API_ENDPOINT = URL(string: "https://api.ipify.org/?format=json")!
-fileprivate let LOGGER = Logger(label: "com.gwcoffey.cfddns.IpUtils")
+private let ipifyApiUrl = URL(string: "https://api.ipify.org/?format=json")!
+private let logger = Logger(label: "com.gwcoffey.cfddns.IpUtils")
 
-fileprivate struct IP: Decodable {
-    let ip: String
+private struct IpResponse: Decodable {
+    let ipAddress: String
+
+    enum CodingKeys: String, CodingKey {
+        case ipAddress = "ip"
+    }
 }
 
 func lookupIp() async throws -> String {
-    LOGGER.info("Call: \(IPIFY_API_ENDPOINT.absoluteString)")
-    let (data, _) = try await URLSession.shared.data(from: IPIFY_API_ENDPOINT)
-    let ip = try decodeJson(IP.self, from: data)
-    return ip.ip
+    logger.info("Call: \(ipifyApiUrl.absoluteString)")
+    let (data, _) = try await URLSession.shared.data(from: ipifyApiUrl)
+    let response = try decodeJson(IpResponse.self, from: data)
+    return response.ipAddress
 }

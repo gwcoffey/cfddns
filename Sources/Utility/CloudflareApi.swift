@@ -5,11 +5,11 @@ import Logging
 
 class CloudflareApi {
     private let token: String
-    
+
     init(token: String) {
         self.token = token
     }
-    
+
     func updateARecord(zoneName: String, recordName: String, ipAddress: String) async throws {
         guard let zone = try await cfapiListZones(domain: zoneName).first else {
             throw CloudflareApiError.invalidZoneName(zoneName)
@@ -17,8 +17,8 @@ class CloudflareApi {
         guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName).first else {
             throw CloudflareApiError.invalidRecordName(recordName)
         }
-        
-        let _ = try await cfapiUpdateDnsRecord(
+
+        _ = try await cfapiUpdateDnsRecord(
             zoneId: zone.id,
             recordId: record.id,
             ipAddress: ipAddress)
@@ -31,10 +31,10 @@ class CloudflareApi {
         guard let record = try await cfapiListDnsRecords(zoneId: zone.id, name: recordName).first else {
             throw CloudflareApiError.invalidRecordName(recordName)
         }
-        
+
         return record.content
     }
-    
+
     // private
     private func appendBearerToken(request: inout URLRequest) throws {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -50,11 +50,11 @@ class CloudflareApi {
         var request = request
         try appendBearerToken(request: &request)
         request.setValue("application/json", forHTTPHeaderField: "Accepts")
-        
+
         if request.httpBody != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-        
+
         let (data, _) = try await URLSession.shared.data(for: request)
         let response = try decodeJson(CFAPIResponse<T>.self, from: data)
         if response.success {
@@ -84,17 +84,16 @@ class CloudflareApi {
         request.httpBody = try JSONEncoder().encode(payload)
         return try await cfapiCall(request: request)
     }
-
 }
 
-fileprivate let CLOUDFLARE_API_BASE = "https://api.cloudflare.com/client/v4"
-fileprivate let LOGGER = Logger(label: "com.gwcoffey.cfddns.CloudFlairUtils")
+private let cloudflareApiBaseUrl = "https://api.cloudflare.com/client/v4"
+private let LOGGER = Logger(label: "com.gwcoffey.cfddns.CloudFlairUtils")
 
-fileprivate enum CloudflareApiError: Error, CustomStringConvertible {
+private enum CloudflareApiError: Error, CustomStringConvertible {
     case invalidZoneName(String)
     case invalidRecordName(String)
     case updateFailed([String])
-    
+
     var description: String {
         switch self {
         case .invalidZoneName(let name):
@@ -102,61 +101,59 @@ fileprivate enum CloudflareApiError: Error, CustomStringConvertible {
         case .invalidRecordName(let name):
             return "This Cloudflare zone has no record named '\(name)'."
         case .updateFailed(let messages):
-           let formattedMessages = messages.map{ "Cloudflare Message: \($0)"}.joined(separator: "\n")
+           let formattedMessages = messages.map { "Cloudflare Message: \($0)"}.joined(separator: "\n")
             return "Unable to update Cloudflare record.\n\(formattedMessages)"
         }
     }
 }
 
-
 // PAYLOADS
 
-fileprivate struct CFAPIResponse<T: Decodable>: Decodable {
+private struct CFAPIResponse<T: Decodable>: Decodable {
     let success: Bool
     let errors: [CFAPIMessage]
     let messages: [CFAPIMessage]
     let result: T?
 }
 
-fileprivate struct CFAPIMessage: Decodable {
+private struct CFAPIMessage: Decodable {
     let code: Int
     let message: String
 }
 
-fileprivate struct CFAPIZone: Decodable {
+private struct CFAPIZone: Decodable {
     let id: String
 }
 
-fileprivate struct CFAPIARecord: Decodable {
+private struct CFAPIARecord: Decodable {
     let id: String
     let content: String
 }
 
-fileprivate struct CFAPIUpdateARecord: Encodable {
+private struct CFAPIUpdateARecord: Encodable {
     let comment: String
     let content: String
 }
 
-
 // URLs
 
-fileprivate func listZonesUrl(zoneName: String) throws -> URL {
-    let str = String(format: "%@/zones?name=%@", CLOUDFLARE_API_BASE, zoneName)
+private func listZonesUrl(zoneName: String) throws -> URL {
+    let str = String(format: "%@/zones?name=%@", cloudflareApiBaseUrl, zoneName)
     guard let url = URL(string: str) else {
         throw CloudflareApiError.invalidZoneName(zoneName)
     }
     return url
 }
 
-fileprivate func listDnsRecordsUrl(zoneId: String, name: String) throws -> URL {
-    let str = String(format: "%@/zones/%@/dns_records?name=%@", CLOUDFLARE_API_BASE, zoneId, name)
+private func listDnsRecordsUrl(zoneId: String, name: String) throws -> URL {
+    let str = String(format: "%@/zones/%@/dns_records?name=%@", cloudflareApiBaseUrl, zoneId, name)
     guard let url = URL(string: str) else {
         throw CloudflareApiError.invalidRecordName(name)
     }
     return url
 }
 
-fileprivate func recordUrl(zoneId: String, dnsRecordId: String) -> URL {
-    let str = String(format: "%@/zones/%@/dns_records/%@", CLOUDFLARE_API_BASE, zoneId, dnsRecordId)
+private func recordUrl(zoneId: String, dnsRecordId: String) -> URL {
+    let str = String(format: "%@/zones/%@/dns_records/%@", cloudflareApiBaseUrl, zoneId, dnsRecordId)
     return URL(string: str)!
 }

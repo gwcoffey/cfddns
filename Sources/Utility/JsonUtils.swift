@@ -1,8 +1,8 @@
 import Foundation
 
-fileprivate enum JsonUtilsError: Error, CustomStringConvertible {
+private enum JsonUtilsError: Error, CustomStringConvertible {
     case invalidResponse(Error, String)
-    
+
     var description: String {
         switch self {
         case .invalidResponse(let error, let body):
@@ -11,7 +11,7 @@ fileprivate enum JsonUtilsError: Error, CustomStringConvertible {
     }
 }
 
-func decodeJson<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable {
+func decodeJson<T>(_ type: T.Type, from data: Data) throws -> T where T: Decodable {
     do {
         return try JSONDecoder().decode(type, from: data)
     } catch let decodingError as DecodingError {

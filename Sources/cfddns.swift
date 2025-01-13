@@ -8,4 +8,3 @@ import Logging
         subcommands: [RefreshCommand.self, CheckCommand.self],
         defaultSubcommand: RefreshCommand.self)
 }
-
