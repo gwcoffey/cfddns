@@ -2,6 +2,20 @@ import ArgumentParser
 import Logging
 import Foundation
 
+fileprivate let TOKEN_ENV_VAR = "CLOUDFLARE_API_TOKEN"
+
+enum CommonError: Error, CustomStringConvertible {
+    case missingCloudflareToken
+    
+    var description: String {
+        switch self {
+        case .missingCloudflareToken:
+            return "A Cloudflare API token is expected in environemnt variable \(TOKEN_ENV_VAR) but none was provided"
+        }
+    }
+}
+
+
 // common options applied to all commands
 public struct CommonOptions: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Use verbose logging.")
@@ -15,7 +29,7 @@ public struct CommonOptions: ParsableCommand {
     
     public mutating func validate() throws {
         if cloudflareToken.isEmpty {
-            throw CfddnsError.missingCloudflareToken
+            throw CommonError.missingCloudflareToken
         }
     }
 

@@ -10,11 +10,11 @@ struct RefreshCommand: BaseCommand {
         abstract: "Update CloudFlare DNS with your current IP address.")
     
     func runCommand() async throws {
+        let cfapi = CloudflareApi(token: commonOptions.cloudflareToken)
         let ip = try await lookupIp()
-        try await updateARecord(
+        try await cfapi.updateARecord(
             zoneName: cfRecordOptions.zone,
             recordName: cfRecordOptions.name,
-            ipAddress: ip,
-            token: commonOptions.cloudflareToken)
+            ipAddress: ip)
     }
 }
