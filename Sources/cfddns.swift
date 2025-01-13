@@ -2,18 +2,22 @@ import Foundation
 import ArgumentParser
 import Logging
 
-fileprivate let TOKEN_ENV_VAR = "CLOUDFLARE_API_TOKEN"
+let TOKEN_ENV_VAR = "CLOUDFLARE_API_TOKEN"
 
 enum CfddnsError: Error, CustomStringConvertible {
-    case noToken
-    
+    case missingCloudflareToken
+
+    // CHECK command
+    case ipMismatch(current: String, configured: String)
+
     var description: String {
         switch self {
-        case .noToken:
+        case .missingCloudflareToken:
             return "A Cloudflare API token is expected in environemnt variable \(TOKEN_ENV_VAR) but none was provided"
+        case .ipMismatch(let current, let configured):
+            return "Configured IP is \(configured), but current IP is \(current)"
         }
     }
-
 }
 
 @main struct Cfddns: AsyncParsableCommand {
@@ -23,32 +27,3 @@ enum CfddnsError: Error, CustomStringConvertible {
         defaultSubcommand: RefreshCommand.self)
 }
 
-struct GlobalOptions: ParsableArguments {
-    @Flag(name: .shortAndLong, help: "Use verbose logging.")
-    var verbose = false
-    
-    var token = ""
-    
-    mutating func apply() throws {
-        let copy = self
-        LoggingSystem.bootstrap { label in
-            var handler = StreamLogHandler.standardError(label: label)
-            handler.logLevel = copy.verbose ? .info : .error
-            return handler
-        }
-        
-        guard let myToken = ProcessInfo.processInfo.environment[TOKEN_ENV_VAR] else {
-            throw CfddnsError.noToken
-        }
-        
-        token = myToken
-    }
-}
-
-struct CloudflareRecordOptions: ParsableArguments {
-    @Argument(help: "The Cloudflare zone name (eg, 'example.com').")
-    var zone: String
-
-    @Argument(help: "The full record name (eg, 'host.example.com').")
-    var name: String
-}
