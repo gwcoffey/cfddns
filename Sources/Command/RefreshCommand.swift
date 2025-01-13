@@ -1,22 +1,20 @@
 import Foundation
 import ArgumentParser
 
-struct RefreshCommand: AsyncParsableCommand {
-    @OptionGroup var globalOptions: GlobalOptions
+struct RefreshCommand: BaseCommand {
+    @OptionGroup var commonOptions: CommonOptions
     @OptionGroup var cfRecordOptions: CloudflareRecordOptions
 
     static let configuration = CommandConfiguration(
         commandName: "refresh",
         abstract: "Update CloudFlare DNS with your current IP address.")
-    
-    mutating func run() async throws {
-        try globalOptions.apply()
-        
-        let ip = try await lookupIp()
-        try await updateARecord(
+
+    func runCommand() async throws {
+        let cfapi = CloudflareApi(token: try commonOptions.cloudflareToken())
+        let ipAddress = try await lookupIp()
+        try await cfapi.updateARecord(
             zoneName: cfRecordOptions.zone,
             recordName: cfRecordOptions.name,
-            ipAddress: ip,
-            token: globalOptions.token)
+            ipAddress: ipAddress)
     }
 }
