@@ -21,7 +21,7 @@ struct CheckCommand: BaseCommand {
         abstract: "Check the DNS record configuration.")
 
     func runCommand() async throws {
-        let cfapi = CloudflareApi(token: commonOptions.cloudflareToken)
+        let cfapi = CloudflareApi(token: try commonOptions.cloudflareToken())
         let (currentIp, configuredIp) = try await (
             lookupIp(),
             cfapi.getARecordIp(zoneName: cfRecordOptions.zone, recordName: cfRecordOptions.name)

@@ -20,16 +20,14 @@ public struct CommonOptions: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Use verbose logging.")
     var verbose = false
 
-    var cloudflareToken = ""
-
-    public init() {
-        cloudflareToken = ProcessInfo.processInfo.environment[tokenEnvVarName] ?? ""
-    }
-
-    public mutating func validate() throws {
-        if cloudflareToken.isEmpty {
+    func cloudflareToken() throws -> String {
+        guard let value = ProcessInfo.processInfo.environment[tokenEnvVarName] else {
             throw CommonError.missingCloudflareToken
         }
+        return value
+    }
+
+    public init() {
     }
 }
 
