@@ -11,10 +11,16 @@ struct RefreshCommand: BaseCommand {
 
     func runCommand() async throws {
         let cfapi = CloudflareApi(token: try commonOptions.cloudflareToken())
-        let ipAddress = try await lookupIp()
-        try await cfapi.updateARecord(
-            zoneName: cfRecordOptions.zone,
-            recordName: cfRecordOptions.name,
-            ipAddress: ipAddress)
+        let (currentIp, configuredIp) = try await (
+            lookupIp(),
+            cfapi.getARecordIp(zoneName: cfRecordOptions.zone, recordName: cfRecordOptions.name)
+        )
+        
+        if currentIp != configuredIp {
+            try await cfapi.updateARecord(
+                zoneName: cfRecordOptions.zone,
+                recordName: cfRecordOptions.name,
+                ipAddress: currentIp)
+        }
     }
 }
