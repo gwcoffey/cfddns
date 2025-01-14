@@ -3,6 +3,13 @@
 import Foundation
 import Logging
 
+private var dateFormatter: DateFormatter {
+    let value = DateFormatter()
+    value.timeZone = TimeZone(identifier: "UTC")
+    value.dateFormat = "yyyy-MM-dd HH:mm:ss UTC"
+    return value
+}
+
 class CloudflareApi {
     private let token: String
 
@@ -77,7 +84,10 @@ class CloudflareApi {
         recordId: String,
         ipAddress: String
     ) async throws -> CFAPIARecord {
-        let payload = CFAPIUpdateARecord.init(comment: "updated by cfddns", content: ipAddress)
+        let stamp = dateFormatter.string(from: Date())
+        let payload = CFAPIUpdateARecord.init(
+            comment: "updated by cfddns \(stamp)",
+            content: ipAddress)
 
         var request = URLRequest(url: recordUrl(zoneId: zoneId, dnsRecordId: recordId))
         request.httpMethod = "PATCH"
