@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import Logging
 
-private let LOGGER = Logger(label: "com.gwcoffey.cfddns.RefreshCommand")
+private let logger = Logger(label: "com.gwcoffey.cfddns.RefreshCommand")
 
 struct RefreshCommand: BaseCommand {
     @OptionGroup var commonOptions: CommonOptions
@@ -20,13 +20,13 @@ struct RefreshCommand: BaseCommand {
         )
 
         if currentIp == configuredIp {
-            LOGGER.info(
+            logger.info(
                 Logger.Message(stringLiteral:
                                "record \(cfRecordOptions.name) " +
                                "in zone \(cfRecordOptions.zone) " +
                                "has ip \(configuredIp) which matches current ip"))
         } else {
-            LOGGER.notice(
+            logger.notice(
                 Logger.Message(stringLiteral:
                                "updating record \(cfRecordOptions.name) " +
                                "in zone \(cfRecordOptions.zone) " +
