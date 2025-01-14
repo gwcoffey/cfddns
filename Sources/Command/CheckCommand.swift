@@ -28,7 +28,7 @@ struct CheckCommand: BaseCommand {
         )
 
         if currentIp == configuredIp {
-            print("OK")
+            throw CleanExit.message("OK")
         } else {
             throw CheckCommandError.ipMismatch(current: currentIp, configured: configuredIp)
         }

@@ -47,7 +47,7 @@ public protocol BaseCommand: AsyncParsableCommand {
 
 extension BaseCommand {
     public func run() async throws {
-        let logLevel: Logger.Level = commonOptions.verbose ? .info : .error
+        let logLevel: Logger.Level = commonOptions.verbose ? .info : .notice
         LoggingSystem.bootstrap { label in
             var handler = StreamLogHandler.standardError(label: label)
             handler.logLevel = logLevel
