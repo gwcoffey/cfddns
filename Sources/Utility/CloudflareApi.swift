@@ -3,6 +3,13 @@
 import Foundation
 import Logging
 
+private var dateFormatter: DateFormatter {
+    let value = DateFormatter()
+    value.timeZone = TimeZone(identifier: "UTC")
+    value.dateFormat = "yyyy-MM-dd HH:mm:ss UTC"
+    return value
+}
+
 class CloudflareApi {
     private let token: String
 
@@ -46,7 +53,7 @@ class CloudflareApi {
     }
 
     private func cfapiCall<T: Decodable>(request: URLRequest) async throws -> T {
-        LOGGER.info("Call: \(request)")
+        logger.info("Call: \(request)")
         var request = request
         try appendBearerToken(request: &request)
         request.setValue("application/json", forHTTPHeaderField: "Accepts")
@@ -77,7 +84,10 @@ class CloudflareApi {
         recordId: String,
         ipAddress: String
     ) async throws -> CFAPIARecord {
-        let payload = CFAPIUpdateARecord.init(comment: "updated by cfddns", content: ipAddress)
+        let stamp = dateFormatter.string(from: Date())
+        let payload = CFAPIUpdateARecord.init(
+            comment: "updated by cfddns \(stamp)",
+            content: ipAddress)
 
         var request = URLRequest(url: recordUrl(zoneId: zoneId, dnsRecordId: recordId))
         request.httpMethod = "PATCH"
@@ -87,7 +97,7 @@ class CloudflareApi {
 }
 
 private let cloudflareApiBaseUrl = "https://api.cloudflare.com/client/v4"
-private let LOGGER = Logger(label: "com.gwcoffey.cfddns.CloudFlairUtils")
+private let logger = Logger(label: "com.gwcoffey.cfddns.CloudFlairUtils")
 
 private enum CloudflareApiError: Error, CustomStringConvertible {
     case invalidZoneName(String)
